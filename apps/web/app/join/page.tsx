@@ -15,7 +15,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 
-export default function Home() {
+export default function HomePage() {
   return (
     <main className="w-full h-dvh flex justify-center items-center">
       <Card className="">
