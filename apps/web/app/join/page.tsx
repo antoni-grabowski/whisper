@@ -34,7 +34,9 @@ export default function HomePage() {
                 <InputOTPSlot index={0}></InputOTPSlot>
                 <InputOTPSlot index={1}></InputOTPSlot>
                 <InputOTPSlot index={2}></InputOTPSlot>
-                <InputOTPSeparator></InputOTPSeparator>
+              </InputOTPGroup>
+              <InputOTPSeparator></InputOTPSeparator>
+              <InputOTPGroup>
                 <InputOTPSlot index={3}></InputOTPSlot>
                 <InputOTPSlot index={4}></InputOTPSlot>
                 <InputOTPSlot index={5}></InputOTPSlot>

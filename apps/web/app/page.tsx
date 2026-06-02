@@ -1,51 +1,19 @@
-import ModeToggle from "@/components/mode-toggle";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSeparator,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
+"use client";
+import { redirect } from "next/dist/server/api-utils";
+import { useRouter } from "next/navigation";
 
-export default function Home() {
+export default function HomePage() {
+  const router = useRouter();
+
+  function toJoinPage() {
+    router.push("/join");
+  }
+
   return (
-    <main className="w-full h-dvh flex justify-center items-center">
-      <Card className="">
-        <CardHeader>
-          <CardTitle>Connect to chat</CardTitle>
-          <CardDescription>Create or join to a session</CardDescription>
-          <CardAction>
-            <ModeToggle></ModeToggle>
-          </CardAction>
-        </CardHeader>
-        <CardContent className="flex flex-col space-y-2">
-          <Button>Host</Button>
-          <div className="flex flex-row space-x-1">
-            <InputOTP maxLength={6}>
-              <InputOTPGroup>
-                <InputOTPSlot index={0}></InputOTPSlot>
-                <InputOTPSlot index={1}></InputOTPSlot>
-                <InputOTPSlot index={2}></InputOTPSlot>
-                <InputOTPSeparator></InputOTPSeparator>
-                <InputOTPSlot index={3}></InputOTPSlot>
-                <InputOTPSlot index={4}></InputOTPSlot>
-                <InputOTPSlot index={5}></InputOTPSlot>
-              </InputOTPGroup>
-            </InputOTP>
-            <Button className="flex-1" variant="outline">
-              Join
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </main>
+    <div className="flex justify-center items-center h-full w-full">
+      <div className="text-9xl" onClick={() => toJoinPage()}>
+        Whisper...
+      </div>
+    </div>
   );
 }
