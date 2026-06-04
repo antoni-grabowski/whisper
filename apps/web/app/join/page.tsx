@@ -1,3 +1,5 @@
+"use client";
+
 import ModeToggle from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +16,12 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import { createSession } from "@/lib/api";
+
+async function hostClick() {
+  const data = (await createSession()).json();
+  console.log(data);
+}
 
 export default function HomePage() {
   return (
@@ -27,7 +35,7 @@ export default function HomePage() {
           </CardAction>
         </CardHeader>
         <CardContent className="flex flex-col space-y-2">
-          <Button>Host</Button>
+          <Button onClick={hostClick}>Host</Button>
           <div className="flex flex-row space-x-1">
             <InputOTP maxLength={6}>
               <InputOTPGroup>
