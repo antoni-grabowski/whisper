@@ -17,10 +17,11 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { createSession } from "@/lib/api";
+import { createSocketConnection } from "@/lib/socket";
 
 async function hostClick() {
   const data = (await createSession()).json();
-  console.log(data);
+  createSocketConnection();
 }
 
 export default function HomePage() {
