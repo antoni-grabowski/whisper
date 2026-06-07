@@ -18,9 +18,11 @@ import {
 } from "@/components/ui/input-otp";
 import { createSession } from "@/lib/api";
 import { createSocketConnection } from "@/lib/socket";
+import { getKeyPair } from "@/lib/sodium";
 
 async function hostClick() {
-  const data = (await createSession()).json();
+  const keyPair = getKeyPair();
+  const data = (await createSession(keyPair.publicKey)).json();
   createSocketConnection();
 }
 

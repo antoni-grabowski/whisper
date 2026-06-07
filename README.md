@@ -29,6 +29,10 @@ libsodium-wrappers in the browser
 | Traffic analysis (who talked to who) | Partial    | Don't log IPs; timing still visible to server |
 | Real identity (IP)                   | No         | Requires user to use Tor/VPN                  |
 
+## Features
+
+E2E enctryption via Diffie-Hellman using libsodium
+
 ## ToDo
 
 ### Connecting both users
