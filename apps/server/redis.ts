@@ -33,13 +33,14 @@ export async function deleteRoom() {}
 export async function attachGuest(
   roomCode: string,
   guestPublicKey: Uint8Array<ArrayBufferLike>,
+  guestId: string,
 ) {
-  if (await roomExists)
-    return await client.hSet(
-      `room:${roomCode}`,
-      "guestPublicKey",
-      Buffer.from(guestPublicKey).toString(),
-    );
+  if (await roomExists(roomCode)) {
+    return await client.hSet(`room:${roomCode}`, {
+      guestPublicKey: Buffer.from(guestPublicKey).toString(),
+      guestId: guestId,
+    });
+  }
 }
 
 export async function getHostPublicKey(roomCode: string) {

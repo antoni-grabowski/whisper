@@ -1,15 +1,15 @@
 import { FastifyInstance } from "fastify";
-import { createRoom, roomExists } from "./redis.js";
+import { attachGuest, createRoom, roomExists } from "./redis.js";
 import { generateRoomCode } from "./utils.js";
-import { CreateSessionRequest } from "./types.js";
+import { CreateRoomRequest, JoinRoomRequest } from "./types.js";
 
 export default function registerRoutes(fastify: FastifyInstance) {
   fastify.get("/", function (request, reply) {
     reply.send({ it: "works" });
   });
 
-  fastify.post<CreateSessionRequest>(
-    "/createSession",
+  fastify.post<CreateRoomRequest>(
+    "/createRoom",
     async function (request, reply) {
       const hostId = crypto.randomUUID();
       let roomCode = generateRoomCode();
@@ -21,4 +21,9 @@ export default function registerRoutes(fastify: FastifyInstance) {
       });
     },
   );
+
+  fastify.post<JoinRoomRequest>("/joinRoom", async function (request, reply) {
+    const guestId = crypto.randomUUID();
+    attachGuest(request.body.roomCode, request.body.guestPublicKey, guestId);
+  });
 }

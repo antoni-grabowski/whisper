@@ -16,17 +16,45 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { createSession } from "@/lib/api";
-import { createSocketConnection } from "@/lib/socket";
+import { createRoom, joinRoom } from "@/lib/api";
 import { getKeyPair } from "@/lib/sodium";
+import { CreateRoomResponse } from "@/lib/types";
+import { useRouter } from "next/router";
+import sodium from "libsodium-wrappers";
+import { useEffect } from "react";
+const router = useRouter();
 
-async function hostClick() {
-  const keyPair = getKeyPair();
-  const data = (await createSession(keyPair.publicKey)).json();
-  createSocketConnection();
+async function hostClick(publicKey: Uint8Array<ArrayBufferLike>) {
+  const response: CreateRoomResponse = await (
+    await createRoom(publicKey)
+  ).json();
+
+  router.push(`/chat/${response.roomCode}`);
+}
+
+async function joinClick(
+  roomCode: string,
+  publicKey: Uint8Array<ArrayBufferLike>,
+) {
+  await joinRoom(publicKey);
+  router.push(`/chat/${roomCode}`);
 }
 
 export default function HomePage() {
+  useEffect(() => {
+    if (
+      sessionStorage.getItem("privateKey") !== null &&
+      sessionStorage.getItem("publicKey") !== null
+    ) {
+      const keyPair = getKeyPair();
+      sessionStorage.setItem(
+        "privateKey",
+        sodium.to_string(keyPair.privateKey),
+      );
+      sessionStorage.setItem("publicKey", sodium.to_string(keyPair.publicKey));
+    }
+  }, []);
+
   return (
     <main className="w-full h-dvh flex justify-center items-center">
       <Card className="">
@@ -38,9 +66,17 @@ export default function HomePage() {
           </CardAction>
         </CardHeader>
         <CardContent className="flex flex-col space-y-2">
-          <Button onClick={hostClick}>Host</Button>
+          <Button
+            onClick={() => {
+              hostClick(
+                sodium.from_base64(sessionStorage.getItem("publicKey")!),
+              );
+            }}
+          >
+            Host
+          </Button>
           <div className="flex flex-row space-x-1">
-            <InputOTP maxLength={6}>
+            <InputOTP maxLength={6} minLength={6}>
               <InputOTPGroup>
                 <InputOTPSlot index={0}></InputOTPSlot>
                 <InputOTPSlot index={1}></InputOTPSlot>

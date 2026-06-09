@@ -6,8 +6,15 @@ export type Room = {
   guestPublicKey: string;
 };
 
-export type CreateSessionRequest = {
+export type CreateRoomRequest = {
   Body: {
     hostPublicKey: Uint8Array<ArrayBufferLike>;
+  };
+};
+
+export type JoinRoomRequest = {
+  Body: {
+    roomCode: string;
+    guestPublicKey: Uint8Array<ArrayBufferLike>;
   };
 };

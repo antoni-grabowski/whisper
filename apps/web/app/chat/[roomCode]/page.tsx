@@ -16,7 +16,10 @@ import { cn } from "@/lib/utils";
 import { CircleUserRound, Send, X } from "lucide-react";
 import { useRef, useState } from "react";
 
-export default function ChatPage() {
+async function joinChat() {}
+
+export default function ChatPage(params: { roomCode: string }) {
+  const roomCode = params.roomCode;
   type Message = { id: number; text: string; isOwn: boolean };
   const [messages, setMessages] = useState<Message[]>([]);
 
