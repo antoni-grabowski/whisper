@@ -6,5 +6,5 @@ export function createSocketConnection() {
 }
 
 export function sendMessage(socket: Socket, message: any) {
-  socket.emit("send-message");
+  socket.emit("send-message", message);
 }

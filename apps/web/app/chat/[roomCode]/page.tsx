@@ -12,35 +12,63 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { amIHost } from "@/lib/api";
+import { createSocketConnection } from "@/lib/socket";
+import { encryptMessage } from "@/lib/sodium";
 import { cn } from "@/lib/utils";
+import sodium from "libsodium-wrappers";
 import { CircleUserRound, Send, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
+import { Socket } from "socket.io-client";
 
-async function joinChat() {}
+export default function ChatPage({
+  params,
+}: {
+  params: Promise<{ roomCode: string }>;
+}) {
+  const { roomCode } = use(params);
 
-export default function ChatPage(params: { roomCode: string }) {
-  const roomCode = params.roomCode;
+  const socket = useRef(createSocketConnection());
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const isHost = useRef<boolean>(false);
+
+  useEffect(() => {
+    async function checkIfHost() {
+      const response = await amIHost(
+        roomCode,
+        sodium.from_base64(sessionStorage.getItem("publicKey") ?? ""),
+      );
+      isHost.current = ((await response.json()) as { isHost: boolean }).isHost;
+    }
+    checkIfHost();
+    socket.current = createSocketConnection();
+    socket.current.on("connect", () => {
+      setIsSocketConnected(true);
+      if (!isHost) {
+      }
+    });
+    return () => {
+      socket.current?.disconnect();
+    };
+  }, []);
+
   type Message = { id: number; text: string; isOwn: boolean };
   const [messages, setMessages] = useState<Message[]>([]);
 
   const msg = useRef("");
-  const counter = useRef(0);
 
   function sendMessage(msg: string) {
-    let isOwnMod: boolean = counter.current % 2 == 0 ? false : true;
-    setMessages((prev: Message[]) => [
-      ...prev,
-      { id: counter.current, text: msg, isOwn: isOwnMod },
-    ]);
-    counter.current++;
+    // const encryptedMessage = encryptMessage(msg);
+    if (socket.current !== null) {
+      //   socket.current.emit("send-message", encryptedMessage);
+    }
   }
 
   return (
     <main className="w-full h-dvh flex justify-center items-center">
       <Card className="w-1/2 h-3/4">
         <CardHeader className="flex flex-row items-center">
-          <CircleUserRound />
-          Username
+          <div>{roomCode}</div>
           <ModeToggle className="ml-auto"></ModeToggle>
           <Button size="icon">
             <X></X>

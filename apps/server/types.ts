@@ -1,7 +1,5 @@
 export type Room = {
   roomCode: string;
-  hostId: string;
-  guestId: string;
   hostPublicKey: string;
   guestPublicKey: string;
 };
