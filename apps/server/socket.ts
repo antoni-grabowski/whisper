@@ -12,6 +12,11 @@ export function createSocketServer(fastify: FastifyInstance) {
 
 export function onConnection(io: Server) {
   io.on("connection", (socket) => {
-    console.log(`Socket id: ${socket.id}`);
+    socket.on("guestJoin", () => {
+      socket.broadcast.emit("guestJoined");
+    });
+    socket.on("send-message", (msg, isHost, room) => {
+      socket.to(room).emit("receive-message", msg, isHost);
+    });
   });
 }

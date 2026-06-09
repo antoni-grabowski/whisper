@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { amIHost } from "@/lib/api";
+import { amIHost, getGuestPublicKey, getHostPublicKey } from "@/lib/api";
 import { createSocketConnection } from "@/lib/socket";
 import { encryptMessage } from "@/lib/sodium";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ export default function ChatPage({
   const socket = useRef(createSocketConnection());
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const isHost = useRef<boolean>(false);
+  const messageId = useRef(0);
 
   useEffect(() => {
     async function checkIfHost() {
@@ -40,12 +41,46 @@ export default function ChatPage({
       );
       isHost.current = ((await response.json()) as { isHost: boolean }).isHost;
     }
+    async function setGuestPublicKey(roomCode: string) {
+      const response = await getGuestPublicKey(roomCode);
+      sessionStorage.setItem(
+        "guestPublicKey",
+        (await response.json()).guestPublicKey,
+      );
+    }
+    async function setHostPublicKey(roomCode: string) {
+      const response = await getHostPublicKey(roomCode);
+      sessionStorage.setItem(
+        "hostPublicKey",
+        (await response.json()).hostPublicKey,
+      );
+    }
     checkIfHost();
     socket.current = createSocketConnection();
     socket.current.on("connect", () => {
       setIsSocketConnected(true);
-      if (!isHost) {
+      if (isHost) {
+        socket.current.on("guestJoined", () => {
+          setGuestPublicKey(roomCode);
+        });
       }
+      if (!isHost) {
+        socket.current.emit("guestJoin", roomCode);
+        setHostPublicKey(roomCode);
+      }
+      socket.current.on("receive-message", (msg, isSenderAHost, room) => {
+        setMessages((prev) => {
+          return [
+            ...prev,
+            {
+              id: messageId.current,
+              text: msg,
+              isOwn: isSenderAHost == isHost ? true : false,
+            },
+          ];
+        });
+        messageId.current += 1;
+      });
     });
     return () => {
       socket.current?.disconnect();
@@ -59,7 +94,8 @@ export default function ChatPage({
 
   function sendMessage(msg: string) {
     // const encryptedMessage = encryptMessage(msg);
-    if (socket.current !== null) {
+    if (socket.current !== null && isSocketConnected) {
+      socket.current.emit("send-message", msg, isHost);
       //   socket.current.emit("send-message", encryptedMessage);
     }
   }

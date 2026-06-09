@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import {
   attachGuest,
   createRoom,
+  getGuestPublicKey,
   getHostPublicKey,
   roomExists,
 } from "./redis.js";
@@ -30,7 +31,7 @@ export default function registerRoutes(fastify: FastifyInstance) {
     reply.send({});
   });
 
-  fastify.get<{
+  fastify.post<{
     Body: {
       roomCode: string;
       publicKey: Uint8Array<ArrayBufferLike>;
@@ -48,4 +49,19 @@ export default function registerRoutes(fastify: FastifyInstance) {
       : (isHost = false);
     reply.send({ isHost: isHost });
   });
+
+  fastify.post<{ Body: { roomCode: string } }>(
+    "/getGuestPublicKey",
+    async (request, reply) => {
+      const guestPublicKey = await getGuestPublicKey(request.body.roomCode);
+      reply.send({ guestPublicKey });
+    },
+  );
+  fastify.post<{ Body: { roomCode: string } }>(
+    "/getHostPublicKey",
+    async (request, reply) => {
+      const hostPublicKey = await getHostPublicKey(request.body.roomCode);
+      reply.send({ hostPublicKey });
+    },
+  );
 }

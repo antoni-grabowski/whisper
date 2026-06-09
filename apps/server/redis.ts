@@ -13,13 +13,10 @@ export async function roomExists(code: string): Promise<boolean> {
   return roomExists ? true : false;
 }
 
-export async function createRoom(
-  code: string,
-  hostPublicKey: Uint8Array<ArrayBufferLike>,
-) {
+export async function createRoom(code: string, hostPublicKey: string) {
   const room: Room = {
     roomCode: code,
-    hostPublicKey: Buffer.from(hostPublicKey).toString(),
+    hostPublicKey: hostPublicKey,
     guestPublicKey: "",
   };
   return await client.hSet(`room:${code}`, room);
@@ -27,13 +24,10 @@ export async function createRoom(
 
 export async function deleteRoom() {}
 
-export async function attachGuest(
-  roomCode: string,
-  guestPublicKey: Uint8Array<ArrayBufferLike>,
-) {
+export async function attachGuest(roomCode: string, guestPublicKey: string) {
   if (await roomExists(roomCode)) {
     return await client.hSet(`room:${roomCode}`, {
-      guestPublicKey: Buffer.from(guestPublicKey).toString(),
+      guestPublicKey: guestPublicKey,
     });
   }
 }

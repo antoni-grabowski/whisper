@@ -5,8 +5,11 @@ export async function createRoom(publicKey: Uint8Array<ArrayBufferLike>) {
   return await fetch(url, {
     method: "POST",
     body: JSON.stringify({
-      publicKey: publicKey,
+      hostPublicKey: publicKey,
     }),
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 }
 
@@ -18,9 +21,12 @@ export async function joinRoom(
   return await fetch(url, {
     method: "POST",
     body: JSON.stringify({
-      publicKey: publicKey,
+      guestPublicKey: publicKey,
       roomCode: roomCode,
     }),
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 }
 
@@ -30,10 +36,39 @@ export async function amIHost(
 ) {
   const url = BASE + "/amIHost";
   return await fetch(url, {
-    method: "GET",
+    method: "POST",
     body: JSON.stringify({
       roomCode: roomCode,
       publicKey: publicKey,
     }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+export async function getGuestPublicKey(roomCode: string) {
+  const url = BASE + "/getGuestPublicKey";
+  return await fetch(url, {
+    method: "POST",
+    body: JSON.stringify({
+      roomCode: roomCode,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+export async function getHostPublicKey(roomCode: string) {
+  const url = BASE + "/getHostPublicKey";
+  return await fetch(url, {
+    method: "POST",
+    body: JSON.stringify({
+      roomCode: roomCode,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 }

@@ -8,3 +8,7 @@ export function createSocketConnection() {
 export function sendMessage(socket: Socket, message: any) {
   socket.emit("send-message", message);
 }
+
+export function notifyGuestJoin(socket: Socket) {
+  socket.emit("guestJoin");
+}

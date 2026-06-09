@@ -62,9 +62,9 @@ export default function HomePage() {
       const keyPair = getKeyPair();
       sessionStorage.setItem(
         "privateKey",
-        sodium.to_string(keyPair.privateKey),
+        sodium.to_base64(keyPair.privateKey),
       );
-      sessionStorage.setItem("publicKey", sodium.to_string(keyPair.publicKey));
+      sessionStorage.setItem("publicKey", sodium.to_base64(keyPair.publicKey));
     }
   }, []);
 
