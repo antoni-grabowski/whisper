@@ -36,21 +36,22 @@ export default function ChatPage({
   useEffect(() => {
     async function init() {
       await checkIfHost();
-      socket.current = createSocketConnection();
-      socket.current.on("connect", () => {
+      const s = createSocketConnection();
+      socket.current = s;
+      s.on("connect", () => {
         setIsSocketConnected(true);
         if (socket.current !== null) {
           if (isHost.current) {
-            socket.current.emit("host-joined", roomCode);
-            socket.current.on("guest-joined", () => {
+            s.emit("host-joined", roomCode);
+            s.on("guest-joined", () => {
               setGuestPublicKey(roomCode);
             });
           }
           if (!isHost.current) {
-            socket.current.emit("guest-join", roomCode);
+            s.emit("guest-join", roomCode);
             setHostPublicKey(roomCode);
           }
-          socket.current.on("receive-message", (msg, isSenderAHost) => {
+          s.on("receive-message", (msg, isSenderAHost) => {
             setMessages((prev) => {
               return [
                 ...prev,
@@ -89,7 +90,7 @@ export default function ChatPage({
     }
     init();
     return () => {
-      socket.current?.disconnect();
+      s.disconnect();
     };
   }, []);
 
