@@ -1,3 +1,5 @@
+import { keyToString } from "./sodium";
+
 const BASE = process.env.NEXT_PUBLIC_API_URL;
 
 export async function createRoom(publicKey: Uint8Array<ArrayBufferLike>) {
@@ -5,7 +7,7 @@ export async function createRoom(publicKey: Uint8Array<ArrayBufferLike>) {
   return await fetch(url, {
     method: "POST",
     body: JSON.stringify({
-      hostPublicKey: publicKey,
+      hostPublicKey: keyToString(publicKey),
     }),
     headers: {
       "Content-Type": "application/json",
@@ -21,7 +23,7 @@ export async function joinRoom(
   return await fetch(url, {
     method: "POST",
     body: JSON.stringify({
-      guestPublicKey: publicKey,
+      guestPublicKey: keyToString(publicKey),
       roomCode: roomCode,
     }),
     headers: {
@@ -39,7 +41,7 @@ export async function amIHost(
     method: "POST",
     body: JSON.stringify({
       roomCode: roomCode,
-      publicKey: publicKey,
+      publicKey: keyToString(publicKey),
     }),
     headers: {
       "Content-Type": "application/json",

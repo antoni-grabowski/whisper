@@ -12,8 +12,15 @@ export function createSocketServer(fastify: FastifyInstance) {
 
 export function onConnection(io: Server) {
   io.on("connection", (socket) => {
-    socket.on("guestJoin", () => {
-      socket.broadcast.emit("guestJoined");
+    socket.on("guest-join", (roomCode) => {
+      socket.join(roomCode);
+      socket.broadcast.emit("guest-joined");
+    });
+    socket.on("host-joined", (roomCode) => {
+      socket.join(roomCode);
+    });
+    socket.on("guest-joined", (roomCode) => {
+      socket.to(roomCode).emit("guest-joined");
     });
     socket.on("send-message", (msg, isHost, room) => {
       socket.to(room).emit("receive-message", msg, isHost);

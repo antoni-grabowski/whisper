@@ -34,6 +34,37 @@ export default function ChatPage({
   const messageId = useRef(0);
 
   useEffect(() => {
+    async function init() {
+      await checkIfHost();
+      socket.current = createSocketConnection();
+      socket.current.on("connect", () => {
+        setIsSocketConnected(true);
+        if (isHost.current) {
+          socket.current.emit("host-joined", roomCode);
+          socket.current.on("guest-joined", () => {
+            setGuestPublicKey(roomCode);
+          });
+        }
+        if (!isHost.current) {
+          socket.current.emit("guest-join", roomCode);
+          setHostPublicKey(roomCode);
+        }
+        socket.current.on("receive-message", (msg, isSenderAHost) => {
+          messageId;
+          setMessages((prev) => {
+            return [
+              ...prev,
+              {
+                id: messageId.current,
+                text: msg,
+                isOwn: isSenderAHost == isHost.current ? true : false,
+              },
+            ];
+          });
+          messageId.current += 1;
+        });
+      });
+    }
     async function checkIfHost() {
       const response = await amIHost(
         roomCode,
@@ -55,33 +86,7 @@ export default function ChatPage({
         (await response.json()).hostPublicKey,
       );
     }
-    checkIfHost();
-    socket.current = createSocketConnection();
-    socket.current.on("connect", () => {
-      setIsSocketConnected(true);
-      if (isHost) {
-        socket.current.on("guestJoined", () => {
-          setGuestPublicKey(roomCode);
-        });
-      }
-      if (!isHost) {
-        socket.current.emit("guestJoin", roomCode);
-        setHostPublicKey(roomCode);
-      }
-      socket.current.on("receive-message", (msg, isSenderAHost, room) => {
-        setMessages((prev) => {
-          return [
-            ...prev,
-            {
-              id: messageId.current,
-              text: msg,
-              isOwn: isSenderAHost == isHost ? true : false,
-            },
-          ];
-        });
-        messageId.current += 1;
-      });
-    });
+    init();
     return () => {
       socket.current?.disconnect();
     };
@@ -92,10 +97,10 @@ export default function ChatPage({
 
   const msg = useRef("");
 
-  function sendMessage(msg: string) {
+  function sendMessage(msg: string, roomCode: string) {
     // const encryptedMessage = encryptMessage(msg);
     if (socket.current !== null && isSocketConnected) {
-      socket.current.emit("send-message", msg, isHost);
+      socket.current.emit("send-message", msg, isHost.current, roomCode);
       //   socket.current.emit("send-message", encryptedMessage);
     }
   }
@@ -141,7 +146,7 @@ export default function ChatPage({
             <Button
               variant="outline"
               size="icon"
-              onClick={() => sendMessage(msg.current)}
+              onClick={() => sendMessage(msg.current, roomCode)}
             >
               <Send />
             </Button>

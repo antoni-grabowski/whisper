@@ -36,3 +36,7 @@ export function decryptMessage(
     ),
   );
 }
+
+export function keyToString(key: Uint8Array<ArrayBufferLike>) {
+  return _sodium.to_base64(key);
+}

@@ -6,13 +6,13 @@ export type Room = {
 
 export type CreateRoomRequest = {
   Body: {
-    hostPublicKey: Uint8Array<ArrayBufferLike>;
+    hostPublicKey: string;
   };
 };
 
 export type JoinRoomRequest = {
   Body: {
     roomCode: string;
-    guestPublicKey: Uint8Array<ArrayBufferLike>;
+    guestPublicKey: string;
   };
 };
