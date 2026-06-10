@@ -14,7 +14,7 @@ export function onConnection(io: Server) {
   io.on("connection", (socket) => {
     socket.on("guest-join", (roomCode) => {
       socket.join(roomCode);
-      socket.broadcast.emit("guest-joined");
+      socket.to(roomCode).emit("guest-joined");
     });
     socket.on("host-joined", (roomCode) => {
       socket.join(roomCode);
@@ -22,8 +22,8 @@ export function onConnection(io: Server) {
     socket.on("guest-joined", (roomCode) => {
       socket.to(roomCode).emit("guest-joined");
     });
-    socket.on("send-message", (msg, isHost, room) => {
-      socket.to(room).emit("receive-message", msg, isHost);
+    socket.on("send-message", (msg, room) => {
+      socket.to(room).emit("receive-message", msg);
     });
   });
 }
