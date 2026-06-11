@@ -32,12 +32,12 @@ export async function joinRoom(
   });
 }
 
-export async function amIHost(
+export function amIHost(
   roomCode: string,
   publicKey: Uint8Array<ArrayBufferLike>,
-) {
+): Promise<{ isHost: boolean }> {
   const url = BASE + "/amIHost";
-  return await fetch(url, {
+  return fetch(url, {
     method: "POST",
     body: JSON.stringify({
       roomCode: roomCode,
@@ -46,7 +46,14 @@ export async function amIHost(
     headers: {
       "Content-Type": "application/json",
     },
-  });
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .then((response) => {
+      console.log(response);
+      return response;
+    });
 }
 
 export async function getGuestPublicKey(roomCode: string) {

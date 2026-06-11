@@ -28,51 +28,54 @@ export default function ChatPage({
 }) {
   const { roomCode } = use(params);
 
-  const socket = useRef<Socket>(null);
+  const socket = useRef<Socket | null>(null);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
-  const isHost = useRef<boolean>(false);
+  const [isHost, setIsHost] = useState<boolean | null>(null);
   const messageId = useRef(0);
 
   useEffect(() => {
     async function init() {
-      await checkIfHost();
-      const s = createSocketConnection();
-      socket.current = s;
-      s.on("connect", () => {
-        setIsSocketConnected(true);
-        if (socket.current !== null) {
-          if (isHost.current) {
-            s.emit("host-joined", roomCode);
-            s.on("guest-joined", () => {
-              setGuestPublicKey(roomCode);
+      checkIfHost().then(() => {
+        socket.current =
+          socket.current == null ? createSocketConnection() : socket.current;
+        socket.current.on("connect", () => {
+          setIsSocketConnected(true);
+          if (socket.current !== null) {
+            if (isHost) {
+              socket.current.emit("host-joined", roomCode);
+              socket.current.on("guest-joined", () => {
+                setGuestPublicKey(roomCode);
+              });
+            }
+            if (!isHost) {
+              socket.current.emit("guest-join", roomCode);
+              setHostPublicKey(roomCode);
+            }
+            socket.current.on("receive-message", (msg, isSenderAHost) => {
+              setMessages((prev) => {
+                return [
+                  ...prev,
+                  {
+                    id: messageId.current,
+                    text: msg,
+                    isOwn: isSenderAHost == isHost ? true : false,
+                  },
+                ];
+              });
+              messageId.current += 1;
             });
           }
-          if (!isHost.current) {
-            s.emit("guest-join", roomCode);
-            setHostPublicKey(roomCode);
-          }
-          s.on("receive-message", (msg, isSenderAHost) => {
-            setMessages((prev) => {
-              return [
-                ...prev,
-                {
-                  id: messageId.current,
-                  text: msg,
-                  isOwn: isSenderAHost == isHost.current ? true : false,
-                },
-              ];
-            });
-            messageId.current += 1;
-          });
-        }
+        });
       });
     }
-    async function checkIfHost() {
-      const response = await amIHost(
+    function checkIfHost() {
+      console.log(sessionStorage.getItem("publicKey") ?? "");
+      return amIHost(
         roomCode,
         sodium.from_base64(sessionStorage.getItem("publicKey") ?? ""),
-      );
-      isHost.current = ((await response.json()) as { isHost: boolean }).isHost;
+      ).then((response) => {
+        setIsHost(response.isHost);
+      });
     }
     async function setGuestPublicKey(roomCode: string) {
       const response = await getGuestPublicKey(roomCode);
@@ -90,7 +93,7 @@ export default function ChatPage({
     }
     init();
     return () => {
-      s.disconnect();
+      socket.current?.disconnect();
     };
   }, []);
 
@@ -101,6 +104,7 @@ export default function ChatPage({
 
   function sendMessage(msg: string, roomCode: string) {
     // const encryptedMessage = encryptMessage(msg);
+    console.log(isHost);
     setMessages((prev) => {
       return [
         ...prev,
@@ -125,6 +129,7 @@ export default function ChatPage({
       <Card className="w-1/2 h-3/4">
         <CardHeader className="flex flex-row items-center">
           <div>{roomCode}</div>
+          <div>{isHost}</div>
           <ModeToggle className="ml-auto"></ModeToggle>
           <Button size="icon">
             <X></X>

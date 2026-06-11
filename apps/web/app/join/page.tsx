@@ -28,6 +28,8 @@ export default function HomePage() {
     const response: CreateRoomResponse = await (
       await createRoom(publicKey)
     ).json();
+    console.log(publicKey);
+    console.log(response);
     // const rooms = sessionStorage.getItem("rooms");
     // if (rooms === null) {
     //   sessionStorage.setItem(
