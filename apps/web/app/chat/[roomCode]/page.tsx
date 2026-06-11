@@ -14,7 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { amIHost, getGuestPublicKey, getHostPublicKey } from "@/lib/api";
 import { createSocketConnection } from "@/lib/socket";
-import { encryptMessage } from "@/lib/sodium";
+import { decryptMessage, encryptMessage } from "@/lib/sodium";
 import { cn } from "@/lib/utils";
 import sodium from "libsodium-wrappers";
 import { CircleUserRound, Send, X } from "lucide-react";
@@ -32,6 +32,12 @@ export default function ChatPage({
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const messageId = useRef(0);
   const [isHostState, setIsHostState] = useState<boolean | null>(null);
+
+  function deleteMessageAfterTime(msgId: number, timeInMs: number) {
+    setTimeout(() => {
+      setMessages((prev) => prev.filter((msg) => msg.id !== msgId));
+    }, timeInMs);
+  }
 
   useEffect(() => {
     async function init() {
@@ -53,25 +59,27 @@ export default function ChatPage({
               socket.current.emit("guest-join", roomCode);
               setHostPublicKey(roomCode);
             }
-            socket.current.on("receive-message", (msg, isSenderAHost) => {
+            socket.current.on("receive-message", (msg, nonce) => {
               const publicKey = isHostState
                 ? sessionStorage.getItem("guestPublicKey")
                 : sessionStorage.getItem("hostPublicKey");
-              encryptMessage(
+              const decryptedMessage = decryptMessage(
                 msg,
                 publicKey ?? "",
                 sessionStorage.getItem("privateKey") ?? "",
+                nonce,
               );
               setMessages((prev) => {
                 return [
                   ...prev,
                   {
                     id: messageId.current,
-                    text: msg,
-                    isOwn: isSenderAHost == isHost ? true : false,
+                    text: decryptedMessage,
+                    isOwn: false,
                   },
                 ];
               });
+              deleteMessageAfterTime(messageId.current, 15000);
               messageId.current += 1;
             });
           }
@@ -112,7 +120,7 @@ export default function ChatPage({
       const publicKey = isHostState
         ? sessionStorage.getItem("guestPublicKey")
         : sessionStorage.getItem("hostPublicKey");
-      const encryptedMessage = encryptMessage(
+      const [encryptedMessage, nonce] = encryptMessage(
         msg,
         publicKey ?? "",
         sessionStorage.getItem("privateKey") ?? "",
@@ -127,11 +135,12 @@ export default function ChatPage({
           },
         ];
       });
+      deleteMessageAfterTime(messageId.current, 15000);
 
       messageId.current += 1;
 
       if (socket.current !== null && isSocketConnected) {
-        socket.current.emit("send-message", msg, roomCode);
+        socket.current.emit("send-message", encryptedMessage, roomCode, nonce);
         //   socket.current.emit("send-message", encryptedMessage);
       }
     }
