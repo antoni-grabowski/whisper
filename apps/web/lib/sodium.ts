@@ -8,22 +8,22 @@ export function getKeyPair() {
 
 export function encryptMessage(
   message: string,
-  receiverPublicKey: Uint8Array<ArrayBufferLike>,
-  senderPrivateKey: Uint8Array<ArrayBufferLike>,
+  receiverPublicKey: string,
+  senderPrivateKey: string,
 ) {
   const nonce = _sodium.randombytes_buf(_sodium.crypto_box_NONCEBYTES);
   return _sodium.crypto_box_easy(
     message,
     nonce,
-    receiverPublicKey,
-    senderPrivateKey,
+    _sodium.from_base64(receiverPublicKey),
+    _sodium.from_base64(senderPrivateKey),
   );
 }
 
 export function decryptMessage(
   message: string,
-  receiverPublicKey: Uint8Array<ArrayBufferLike>,
-  senderPrivateKey: Uint8Array<ArrayBufferLike>,
+  receiverPublicKey: string,
+  senderPrivateKey: string,
 ) {
   const rawMessage = _sodium.from_string(message);
   const nonce = _sodium.randombytes_buf(_sodium.crypto_box_NONCEBYTES);
@@ -31,12 +31,8 @@ export function decryptMessage(
     _sodium.crypto_box_open_easy(
       rawMessage,
       nonce,
-      receiverPublicKey,
-      senderPrivateKey,
+      _sodium.from_base64(receiverPublicKey),
+      _sodium.from_base64(senderPrivateKey),
     ),
   );
-}
-
-export function keyToString(key: Uint8Array<ArrayBufferLike>) {
-  return _sodium.to_base64(key);
 }

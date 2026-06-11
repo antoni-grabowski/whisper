@@ -34,17 +34,15 @@ export default function registerRoutes(fastify: FastifyInstance) {
   fastify.post<{
     Body: {
       roomCode: string;
-      publicKey: Uint8Array<ArrayBufferLike>;
+      publicKey: string;
     };
   }>("/amIHost", async (request, reply) => {
-    const hostPublicKey: Uint8Array<ArrayBufferLike> = new Uint8Array(
-      Buffer.from(
-        (await getHostPublicKey(request.body.roomCode)) ?? "",
-        "base64",
-      ),
-    );
-    let isHost = false;
-    hostPublicKey === request.body.publicKey
+    const hostPublicKey = await getHostPublicKey(request.body.roomCode);
+    console.log("Hello: " + hostPublicKey);
+    console.log("World: " + request.body.publicKey);
+
+    let isHost = true;
+    hostPublicKey == request.body.publicKey
       ? (isHost = true)
       : (isHost = false);
     reply.send({ isHost: isHost });

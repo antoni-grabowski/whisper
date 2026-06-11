@@ -24,12 +24,10 @@ import sodium from "libsodium-wrappers";
 import { useEffect, useRef } from "react";
 
 export default function HomePage() {
-  async function hostClick(publicKey: Uint8Array<ArrayBufferLike>) {
+  async function hostClick(publicKey: string) {
     const response: CreateRoomResponse = await (
       await createRoom(publicKey)
     ).json();
-    console.log(publicKey);
-    console.log(response);
     // const rooms = sessionStorage.getItem("rooms");
     // if (rooms === null) {
     //   sessionStorage.setItem(
@@ -46,10 +44,7 @@ export default function HomePage() {
     router.push(`/chat/${response.roomCode}`);
   }
 
-  async function joinClick(
-    roomCode: string,
-    publicKey: Uint8Array<ArrayBufferLike>,
-  ) {
+  async function joinClick(roomCode: string, publicKey: string) {
     await joinRoom(publicKey, roomCode);
     router.push(`/chat/${roomCode}`);
   }
@@ -85,9 +80,7 @@ export default function HomePage() {
         <CardContent className="flex flex-col space-y-2">
           <Button
             onClick={() => {
-              hostClick(
-                sodium.from_base64(sessionStorage.getItem("publicKey")!),
-              );
+              hostClick(sessionStorage.getItem("publicKey") ?? "");
             }}
           >
             Host
@@ -116,7 +109,7 @@ export default function HomePage() {
               onClick={() => {
                 joinClick(
                   roomCode.current,
-                  sodium.from_base64(sessionStorage.getItem("publicKey")!),
+                  sessionStorage.getItem("publicKey") ?? "",
                 );
               }}
               className="flex-1"

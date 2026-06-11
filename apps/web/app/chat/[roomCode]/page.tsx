@@ -30,12 +30,14 @@ export default function ChatPage({
 
   const socket = useRef<Socket | null>(null);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
-  const [isHost, setIsHost] = useState<boolean | null>(null);
   const messageId = useRef(0);
+  const [isHostState, setIsHostState] = useState<boolean | null>(null);
 
   useEffect(() => {
     async function init() {
-      checkIfHost().then(() => {
+      checkIfHost().then((response) => {
+        const isHost = response.isHost;
+        setIsHostState(isHost);
         socket.current =
           socket.current == null ? createSocketConnection() : socket.current;
         socket.current.on("connect", () => {
@@ -52,6 +54,14 @@ export default function ChatPage({
               setHostPublicKey(roomCode);
             }
             socket.current.on("receive-message", (msg, isSenderAHost) => {
+              const publicKey = isHostState
+                ? sessionStorage.getItem("guestPublicKey")
+                : sessionStorage.getItem("hostPublicKey");
+              encryptMessage(
+                msg,
+                publicKey ?? "",
+                sessionStorage.getItem("privateKey") ?? "",
+              );
               setMessages((prev) => {
                 return [
                   ...prev,
@@ -69,13 +79,7 @@ export default function ChatPage({
       });
     }
     function checkIfHost() {
-      console.log(sessionStorage.getItem("publicKey") ?? "");
-      return amIHost(
-        roomCode,
-        sodium.from_base64(sessionStorage.getItem("publicKey") ?? ""),
-      ).then((response) => {
-        setIsHost(response.isHost);
-      });
+      return amIHost(roomCode, sessionStorage.getItem("publicKey") ?? "");
     }
     async function setGuestPublicKey(roomCode: string) {
       const response = await getGuestPublicKey(roomCode);
@@ -94,6 +98,7 @@ export default function ChatPage({
     init();
     return () => {
       socket.current?.disconnect();
+      socket.current == null;
     };
   }, []);
 
@@ -103,24 +108,32 @@ export default function ChatPage({
   const msg = useRef("");
 
   function sendMessage(msg: string, roomCode: string) {
-    // const encryptedMessage = encryptMessage(msg);
-    console.log(isHost);
-    setMessages((prev) => {
-      return [
-        ...prev,
-        {
-          id: messageId.current,
-          isOwn: true,
-          text: msg,
-        },
-      ];
-    });
+    if (isHostState != null) {
+      const publicKey = isHostState
+        ? sessionStorage.getItem("guestPublicKey")
+        : sessionStorage.getItem("hostPublicKey");
+      const encryptedMessage = encryptMessage(
+        msg,
+        publicKey ?? "",
+        sessionStorage.getItem("privateKey") ?? "",
+      );
+      setMessages((prev) => {
+        return [
+          ...prev,
+          {
+            id: messageId.current,
+            isOwn: true,
+            text: msg,
+          },
+        ];
+      });
 
-    messageId.current += 1;
+      messageId.current += 1;
 
-    if (socket.current !== null && isSocketConnected) {
-      socket.current.emit("send-message", msg, roomCode);
-      //   socket.current.emit("send-message", encryptedMessage);
+      if (socket.current !== null && isSocketConnected) {
+        socket.current.emit("send-message", msg, roomCode);
+        //   socket.current.emit("send-message", encryptedMessage);
+      }
     }
   }
 
@@ -129,7 +142,7 @@ export default function ChatPage({
       <Card className="w-1/2 h-3/4">
         <CardHeader className="flex flex-row items-center">
           <div>{roomCode}</div>
-          <div>{isHost}</div>
+          <div>{isHostState}</div>
           <ModeToggle className="ml-auto"></ModeToggle>
           <Button size="icon">
             <X></X>
