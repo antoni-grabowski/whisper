@@ -23,6 +23,7 @@ export function onConnection(io: Server) {
       socket.to(roomCode).emit("guest-joined");
     });
     socket.on("send-message", (msg, room, nonce) => {
+      console.log("The message is: " + msg);
       socket.to(room).emit("receive-message", msg, nonce);
     });
   });

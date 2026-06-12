@@ -46,67 +46,78 @@ export default function ChatPage({
         setIsHostState(isHost);
         socket.current =
           socket.current == null ? createSocketConnection() : socket.current;
+
+        socket.current.off("connect");
+        socket.current.off("guest-joined");
+        socket.current.off("receive-message");
+
         socket.current.on("connect", () => {
           setIsSocketConnected(true);
           if (socket.current !== null) {
             if (isHost) {
               socket.current.emit("host-joined", roomCode);
-              socket.current.on("guest-joined", () => {
-                setGuestPublicKey(roomCode);
-              });
             }
             if (!isHost) {
               socket.current.emit("guest-join", roomCode);
-              setHostPublicKey(roomCode);
+              getCachedHostPublicKey(roomCode);
             }
-            socket.current.on("receive-message", (msg, nonce) => {
-              const publicKey = isHostState
-                ? sessionStorage.getItem("guestPublicKey")
-                : sessionStorage.getItem("hostPublicKey");
-              const decryptedMessage = decryptMessage(
-                msg,
-                publicKey ?? "",
-                sessionStorage.getItem("privateKey") ?? "",
-                nonce,
-              );
-              setMessages((prev) => {
-                return [
-                  ...prev,
-                  {
-                    id: messageId.current,
-                    text: decryptedMessage,
-                    isOwn: false,
-                  },
-                ];
-              });
-              deleteMessageAfterTime(messageId.current, 15000);
-              messageId.current += 1;
-            });
           }
+        });
+
+        if (isHost) {
+          socket.current.on("guest-joined", () => {
+            getCachedGuestPublicKey(roomCode);
+          });
+        }
+
+        socket.current.on("receive-message", async (msg, nonce) => {
+          const publicKey = isHost
+            ? await getCachedGuestPublicKey(roomCode)
+            : await getCachedHostPublicKey(roomCode);
+          const decryptedMessage = decryptMessage(
+            msg,
+            publicKey ?? "",
+            sessionStorage.getItem("privateKey") ?? "",
+            nonce,
+          );
+          setMessages((prev) => {
+            return [
+              ...prev,
+              {
+                id: messageId.current,
+                text: decryptedMessage,
+                isOwn: false,
+              },
+            ];
+          });
+          deleteMessageAfterTime(messageId.current, 15000);
+          messageId.current += 1;
         });
       });
     }
     function checkIfHost() {
       return amIHost(roomCode, sessionStorage.getItem("publicKey") ?? "");
     }
-    async function setGuestPublicKey(roomCode: string) {
+    async function getCachedGuestPublicKey(roomCode: string) {
+      const cached = sessionStorage.getItem("guestPublicKey");
+      if (cached) return cached;
       const response = await getGuestPublicKey(roomCode);
-      sessionStorage.setItem(
-        "guestPublicKey",
-        (await response.json()).guestPublicKey,
-      );
+      const guestPublicKey = (await response.json()).guestPublicKey;
+      sessionStorage.setItem("guestPublicKey", guestPublicKey);
+      return guestPublicKey;
     }
-    async function setHostPublicKey(roomCode: string) {
+    async function getCachedHostPublicKey(roomCode: string) {
+      const cached = sessionStorage.getItem("hostPublicKey");
+      if (cached) return cached;
       const response = await getHostPublicKey(roomCode);
-      sessionStorage.setItem(
-        "hostPublicKey",
-        (await response.json()).hostPublicKey,
-      );
+      const hostPublicKey = (await response.json()).hostPublicKey;
+      sessionStorage.setItem("hostPublicKey", hostPublicKey);
+      return hostPublicKey;
     }
     init();
     return () => {
       socket.current?.disconnect();
-      socket.current == null;
+      socket.current = null;
     };
   }, []);
 
